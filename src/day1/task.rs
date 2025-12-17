@@ -18,7 +18,7 @@ fn calculate_floor() {
             floor = floor - 1;
         }
     }
-    println!("Day1 part 1 answer is {}", floor);
+    println!("Day 1 part 1 answer is {}", floor);
 }
 
 // part 2
@@ -39,5 +39,5 @@ fn find_floor_position() {
             break;
         }
     }
-    println!("Day1 part 2 answer is {}", floor_position);
+    println!("Day 1 part 2 answer is {}", floor_position);
 }
