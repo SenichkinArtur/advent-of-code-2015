@@ -3,12 +3,14 @@ use crate::day2::{day2};
 use crate::day3::{day3};
 use crate::day4::{day4};
 use crate::day5::{day5};
+use crate::day6::{day6};
 
 pub mod day1;
 pub mod day2;
 pub mod day3;
 pub mod day4;
 pub mod day5;
+pub mod day6;
 
 fn main() {
     day1();
@@ -16,4 +18,5 @@ fn main() {
     day3();
     day4();
     day5();
+    day6();
 }
