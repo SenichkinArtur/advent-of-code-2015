@@ -56,7 +56,6 @@ fn get_nice_strings_number_new_model(input: &[String]) -> i32 {
                 seen.insert(pair, i);
             }
         }
-
     }
 
     return nice_strings_count;

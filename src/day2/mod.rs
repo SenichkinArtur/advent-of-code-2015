@@ -1,3 +1,3 @@
-pub mod task; 
+pub mod task;
 
 pub use task::day2;

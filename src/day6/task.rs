@@ -1,5 +1,4 @@
 use std::fs::read_to_string;
-use std::time::Instant;
 
 const ROWS: usize = 1000;
 const COLS: usize = 1000;
@@ -8,14 +7,13 @@ const INSTRUCTION_TURN_ON: &str = "on";
 const INSTRUCTION_TURN_OFF: &str = "off";
 const INSTRUCTION_TOGGLE: &str = "toggle";
 
-#[derive(Debug, PartialEq)]
+#[derive(PartialEq)]
 enum Command {
     TurnOn,
     TurnOff,
     Toggle,
 }
 
-#[derive(Debug)]
 struct Instruction {
     command: Command,
     start: [usize; 2],
@@ -24,17 +22,16 @@ struct Instruction {
 
 pub fn day6() {
     let input: Vec<String> = get_lines("src/day6/input.txt");
-    let start = Instant::now();
-    let part1 = get_the_lights(&input);
-    let duration = start.elapsed();
 
-    println!("Day 6 part 1 answer is {:?}", part1); // correct answer is 569999
-    println!("duration: {:?}", duration); // original duration ~185ms
+    let part1 = get_the_lights(&input);
+    let part2 = get_the_lights_brightness(&input);
+
+    println!("Day 6 part 1 answer is {:?}", part1);
+    println!("Day 6 part 2 answer is {:?}", part2);
 }
 
 fn get_the_lights(lines: &[String]) -> usize {
     let mut lights: Box<[[u8; 1000]; 1000]> = Box::new([[0; COLS]; ROWS]);
-    // let mut lights = vec![vec![false; ROWS]; COLS];
     let instructions = get_instructions(lines);
 
     for instruction in instructions {
@@ -49,12 +46,28 @@ fn get_the_lights(lines: &[String]) -> usize {
         }
     }
 
-    let count: usize = lights
-        .iter()
-        .flatten()
-        .copied()
-        .map(usize::from)
-        .sum::<usize>();
+    let count: usize = get_size(&lights);
+
+    count
+}
+
+fn get_the_lights_brightness(lines: &[String]) -> usize {
+    let mut lights: Box<[[u8; 1000]; 1000]> = Box::new([[0; COLS]; ROWS]);
+    let instructions = get_instructions(lines);
+
+    for instruction in instructions {
+        for y in instruction.start[0]..=instruction.end[0] {
+            for x in instruction.start[1]..=instruction.end[1] {
+                match instruction.command {
+                    Command::TurnOn => lights[y][x] += 1,
+                    Command::TurnOff => lights[y][x] = lights[y][x].saturating_sub(1),
+                    Command::Toggle => lights[y][x] += 2,
+                }
+            }
+        }
+    }
+
+    let count: usize = get_size(&lights);
 
     count
 }
@@ -97,9 +110,21 @@ fn get_instructions(lines: &[String]) -> Vec<Instruction> {
     instructions
 }
 
+fn get_size(lights: &[[u8; 1000]; 1000]) -> usize {
+    return lights
+        .iter()
+        .flatten()
+        .copied()
+        .map(usize::from)
+        .sum::<usize>();
+}
+
 fn parse_coords(token: &str) -> (usize, usize) {
     let (left, right) = token.split_once(",").unwrap();
-    (left.parse::<usize>().unwrap(), right.parse::<usize>().unwrap())
+    (
+        left.parse::<usize>().unwrap(),
+        right.parse::<usize>().unwrap(),
+    )
 }
 
 fn get_lines(path: &str) -> Vec<String> {
