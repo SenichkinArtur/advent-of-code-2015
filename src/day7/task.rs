@@ -31,19 +31,22 @@ struct Instruction {
 
 pub fn day7() {
     let input: Vec<String> = get_lines("src/day7/input.txt");
-    let part1 = get_signal(&input);
+    let _part1 = get_signal(&input);
 
-    println!("Day 8 part 1 answer is {}", part1);
+    // println!("Day 8 part 1 answer is {}", part1);
 }
 
 fn get_signal(input: &[String]) -> i32 {
     let instructions: HashMap<String, Instruction> = parse_instructions(input);
-    let wire_memo: HashMap<String, u16> = HashMap::new();
+    let mut wire_memo: HashMap<String, u16> = HashMap::new();
 
-    eval_wire("a", instructions, &wire_memo);
+    eval_wire("a".to_string(), &instructions, &mut wire_memo);
 
-    // for inst in instructions {
-    //     println!("{:?}", inst);
+    println!("wire_memo: {:?}", wire_memo);
+
+    // for (wire, instruction) in instructions {
+    //     eval_wire(wire.clone(), instruction, &mut wire_memo);
+    //     // println!("{:?}", inst);
     // }
 
     1
@@ -131,29 +134,79 @@ fn parse_instructions(input: &[String]) -> HashMap<String, Instruction> {
     instructions
 }
 
-fn eval_wire(wire: &str, instructions: HashMap<String, Instruction>, wire_memo: &HashMap<String, u16>) -> u16 {
-    let target_instruction = instructions.get(wire).unwrap();
-    let target_value: u16 = match target_instruction.source_1.parse::<u16>() {
-        Ok(number) => number,
+fn eval_wire(
+    wire: String,
+    instructions: &HashMap<String, Instruction>,
+    wire_memo: &mut HashMap<String, u16>,
+) -> u16 {
+    println!("wire: {}", wire);
+    let mut val: u16 = 0;
+    // check cache and return if found
+    if let Some(wire) = wire_memo.get(&wire) {
+        println!("cache branch {}", *wire);
+        return *wire;
+    }
+
+    match wire.parse::<u16>() {
+        Ok(number) => {
+            println!("Wire.parse success: {}", number);
+            // wire_memo.insert(wire.to_string(), number);
+            return number;
+        }
         Err(_e) => {
-            println!("Err branch");
-            eval_wire(wire, instructions, wire_memo)
+            println!("Wire.parse error");
         }
     };
 
-    target_value
-    // match qwe {
-    //    None => println!("None"),
-    //    Some(q) => q,
-    // }
-    // if let Result(j) = qwe.source_1.parse::<u16>() {
-        
-    // }
-    // if let Some(wire) = wire_memo.get(wire) {
-    //     return wire;
-    // }
+    let target_instruction = instructions.get(&wire).unwrap();
+    let source_1_parsed: u16 = match target_instruction.source_1.parse::<u16>() {
+        Ok(number) => {
+            println!("source_1_parsed {}", number);
+            // wire_memo.insert(target_instruction.source_1.to_string(), number);
+            number
+        }
+        Err(_e) => {
+            println!("source_1_parsed Err");
+            eval_wire(target_instruction.source_1.clone(), instructions, wire_memo)
+        }
+    };
+    let mut source_2_parsed: u16 = 0;
+    println!(
+        "target_instruction.source_2: {:?}",
+        target_instruction.source_2
+    );
+    if let Some(j) = &target_instruction.source_2 {
+        println!("if let Some(j): {:?}", j);
+        let source_2: u16 = match j.parse::<u16>() {
+            Ok(number) => {
+                // source_2_parsed = number;
+                println!("source_2_parsed {}", number);
+                // wire_memo.insert(j.to_string(), number);
+                number
+            }
+            Err(_e) => {
+                println!("source_2_parsed Err");
+                eval_wire(j.clone(), instructions, wire_memo)
+            }
+        };
+        source_2_parsed = source_2;
+    }
 
-    // &1
+    match target_instruction.command {
+        Command::Direct => val = source_1_parsed,
+        Command::Not => val = !source_1_parsed,
+        Command::And => val = source_1_parsed & source_2_parsed,
+        Command::Or => val = source_1_parsed | source_2_parsed,
+        Command::Lshift => val = source_1_parsed << source_2_parsed,
+        Command::Rshift => val = source_1_parsed >> source_2_parsed,
+    };
+
+    wire_memo.insert(wire.clone(), val);
+    println!("after match command wire: {:?}, value: {}", wire.clone(), val);
+
+    return val;
+
+    // target_value
 }
 
 fn get_lines(path: &str) -> Vec<String> {
