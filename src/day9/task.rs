@@ -40,21 +40,23 @@ fn get_shortest_disatance(lines: &Vec<String>) -> i32 {
     }
 
     for c in cities.iter() {
-        let qwe: Vec<&CityDistance> = distances.iter().filter(|x| x.city_1 == *c).collect();
-        let asd: Vec<&CityDistance> = distances.iter().filter(|x| x.city_2 == *c).collect();
+        let disttances_city_1: Vec<&CityDistance> =
+            distances.iter().filter(|x| x.city_1 == *c).collect();
+        let disttances_city_2: Vec<&CityDistance> =
+            distances.iter().filter(|x| x.city_2 == *c).collect();
 
-        for q in qwe {
+        for d in disttances_city_1 {
             dist_table.push(CityDistance {
-                city_1: q.city_1.to_string(),
-                city_2: q.city_2.to_string(),
-                distance: q.distance,
+                city_1: d.city_1.to_string(),
+                city_2: d.city_2.to_string(),
+                distance: d.distance,
             })
         }
-        for a in asd {
+        for d in disttances_city_2 {
             dist_table.push(CityDistance {
-                city_1: a.city_2.to_string(),
-                city_2: a.city_1.to_string(),
-                distance: a.distance,
+                city_1: d.city_2.to_string(),
+                city_2: d.city_1.to_string(),
+                distance: d.distance,
             })
         }
     }
@@ -63,21 +65,37 @@ fn get_shortest_disatance(lines: &Vec<String>) -> i32 {
 
     let mut visited: HashSet<&str> = HashSet::new();
     let mut path: Vec<String> = Vec::new();
-    let a = get_min_route("Faerun", &cities, &dist_table, &mut visited, &mut path);
 
-    // for c in &cities {
-    //     let a = get_min_route(*c, &cities, &dist_table);
-    //     println!("a: {:?}", a);
-    // }
+    // TODO: find a way to find the best city to start;
+    // run get_min_path in loop over cities?
+    // handle this inside get_min_path?
+    // figure out the best starting city before get_min_path?
 
-    1
+    // get_min_path seems working correctly, but with specific start city
+    let path = get_min_path("Norrath", &cities, &dist_table, &mut visited, &mut path);
+    let mut distance: i32 = 0;
+
+    for w in path.windows(2) {
+        let dist = &dist_table
+            .iter()
+            .find(|d| d.city_1 == w[0] && d.city_2 == w[1]);
+        match dist {
+            Some(numb) => distance += numb.distance,
+            None => distance += 0,
+        }
+    }
+
+    println!("path: {:?}", path);
+    println!("dist_table: {:?}", &dist_table);
+
+    distance
 }
 
-fn get_min_route(
-    city: &str,
+fn get_min_path<'a>(
+    city: &'a str,
     cities: &HashSet<&str>,
-    dist_table: &Vec<CityDistance>,
-    visited: &mut HashSet<&str>,
+    dist_table: &'a Vec<CityDistance>,
+    visited: &'a mut HashSet<&'a str>,
     path: &mut Vec<String>,
 ) -> Vec<String> {
     if visited.len() == cities.len() {
@@ -96,7 +114,7 @@ fn get_min_route(
         .min_by_key(|d| d.distance);
 
     match next {
-        Some(edge) => get_min_route(edge.city_2.as_str(), cities, dist_table, visited, path),
+        Some(edge) => get_min_path(edge.city_2.as_str(), cities, dist_table, visited, path),
         None => path.clone(),
     }
 }
