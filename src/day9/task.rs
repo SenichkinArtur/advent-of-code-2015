@@ -7,15 +7,22 @@ struct CityDistance {
     city_2: String,
     distance: i32,
 }
+#[derive(Debug)]
+enum Mode {
+    Min,
+    Max,
+}
 
 pub fn day9() {
     let input = get_lines("src/day9/input.txt");
-    let part1 = get_shortest_disatance(&input);
+    let part1 = get_disatance(&input, Mode::Min);
+    let part2 = get_disatance(&input, Mode::Max);
 
     println!("Day 9 part 1 answer is {}", part1);
+    println!("Day 9 part 2 answer is {}", part2);
 }
 
-fn get_shortest_disatance(lines: &Vec<String>) -> i32 {
+fn get_disatance(lines: &Vec<String>, mode: Mode) -> i32 {
     let mut distances: Vec<CityDistance> = vec![];
     let mut cities: HashSet<&str> = HashSet::new();
     let mut dist_table: Vec<CityDistance> = vec![];
@@ -61,42 +68,55 @@ fn get_shortest_disatance(lines: &Vec<String>) -> i32 {
         }
     }
 
-    dist_table.sort_by_key(|d| d.city_1.clone());
+    // dist_table.sort_by_key(|d| d.city_1.clone());
 
     let mut visited: HashSet<&str> = HashSet::new();
     let mut path: Vec<String> = Vec::new();
 
-    // TODO: find a way to find the best city to start;
-    // run get_min_path in loop over cities?
-    // handle this inside get_min_path?
-    // figure out the best starting city before get_min_path?
+    // println!("mode: {:?}", mode);
+    // let start_city = match mode {
+    //     Mode::Min => match &distances.iter().min_by_key(|d| d.distance) {
+    //         Some(d) => &d.city_1,
+    //         None => {
+    //             panic!("start city not found");
+    //         }
+    //     },
+    //     Mode::Max => match &distances.iter().max_by_key(|d| d.distance) {
+    //         Some(d) => &d.city_1,
+    //         None => {
+    //             panic!("start city not found");
+    //         }
+    //     },
+    // };
+    // println!("start_city: {}", start_city);
+    // let start_city =;
 
-    // get_min_path seems working correctly, but with specific start city
-    let path = get_min_path("Norrath", &cities, &dist_table, &mut visited, &mut path);
-    let mut distance: i32 = 0;
+    let mut distance = 0;
+
+    let path = get_path("London", &cities, &dist_table, &mut visited, &mut path, mode);
+
+    let mut city_distance: i32 = 0;
 
     for w in path.windows(2) {
         let dist = &dist_table
             .iter()
             .find(|d| d.city_1 == w[0] && d.city_2 == w[1]);
         match dist {
-            Some(numb) => distance += numb.distance,
-            None => distance += 0,
+            Some(numb) => city_distance += numb.distance,
+            None => city_distance += 0,
         }
     }
-
-    println!("path: {:?}", path);
-    println!("dist_table: {:?}", &dist_table);
 
     distance
 }
 
-fn get_min_path<'a>(
+fn get_path<'a>(
     city: &'a str,
     cities: &HashSet<&str>,
     dist_table: &'a Vec<CityDistance>,
     visited: &'a mut HashSet<&'a str>,
     path: &mut Vec<String>,
+    mode: Mode,
 ) -> Vec<String> {
     if visited.len() == cities.len() {
         return path.clone();
@@ -108,13 +128,31 @@ fn get_min_path<'a>(
         path.push(city.to_string());
     }
 
-    let next = dist_table
-        .iter()
-        .filter(|x| x.city_1 == city && !visited.contains(x.city_2.as_str()))
-        .min_by_key(|d| d.distance);
+    let next = match mode {
+        Mode::Min => dist_table
+            .iter()
+            .filter(|x| x.city_1 == city && !visited.contains(x.city_2.as_str()))
+            .min_by_key(|d| d.distance),
+        Mode::Max => dist_table
+            .iter()
+            .filter(|x| x.city_1 == city && !visited.contains(x.city_2.as_str()))
+            .max_by_key(|d| d.distance),
+    };
+    println!("next: {:?}", next);
+    // let next = dist_table
+    //     .iter()
+    //     .filter(|x| x.city_1 == city && !visited.contains(x.city_2.as_str()))
+    //     .min_by_key(|d| d.distance);
 
     match next {
-        Some(edge) => get_min_path(edge.city_2.as_str(), cities, dist_table, visited, path),
+        Some(edge) => get_path(
+            edge.city_2.as_str(),
+            cities,
+            dist_table,
+            visited,
+            path,
+            mode,
+        ),
         None => path.clone(),
     }
 }
